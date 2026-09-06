@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Misetanibox</title>
 <script src="capacitor.js"></script>
 <style>
@@ -17,6 +17,8 @@
   --rad:6px;
   --display:'Unbounded','Arial Black',Impact,sans-serif;
   --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  /* iOS отдаёт вырез сам; на Android их шлёт MainActivity (WebView env() не знает про системные панели) */
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
 }
 :root[data-theme=light]{
   --bg:#F4F4F2; --fg:#0A0A0A;
@@ -25,10 +27,10 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Segoe UI',system-ui,sans-serif;overflow:hidden}
-.app{display:flex;flex-direction:column;height:100dvh}
+.app{display:flex;flex-direction:column;height:100%}
 .mono{font-family:'JetBrains Mono',monospace}
 .head{display:flex;align-items:center;justify-content:space-between;padding:10px 24px 0;flex:none}
-.app.tab-home .head{display:none}
+.head{display:none}
 .brand{display:flex;align-items:center;gap:9px}
 .brand img{width:22px;height:22px;border-radius:6px;border:1px solid var(--ln)}
 .brand-col{display:flex;flex-direction:column;gap:2px;line-height:1}
@@ -182,7 +184,7 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 .cover-sheet-overlay.hidden{display:none}
 .cover-sheet{width:100%;max-height:78%;display:flex;flex-direction:column;gap:8px;padding:10px 14px calc(16px + var(--sab,0px));border-radius:24px 24px 0 0;background:rgba(20,20,22,.96);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 -16px 50px rgba(0,0,0,.4);animation:sheet-in .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes sheet-in{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-.cover-sheet-handle{width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.35);align-self:center}
+.cover-sheet-handle{width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.3);align-self:center;margin-bottom:4px}
 .sheet-toolbar,.sheet-foot{display:flex;align-items:center;justify-content:space-between;padding:2px 6px;font-size:12px;color:rgba(255,255,255,.6)}
 .sheet-foot{border-top:1px solid rgba(255,255,255,.1);padding-top:8px}
 .sheet-link{border:none;background:transparent;color:#fff;font-weight:600;font-size:13px;min-height:40px;padding:0 8px}
@@ -204,8 +206,8 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 
 /* ВНУТРЕННИЕ СТРАНИЦЫ — ТА ЖЕ ОБЛОЖКА */
 .app{position:relative;background:#0f1013;color:#fff;overflow:hidden}
-.page-bg{position:absolute;inset:0;background-size:cover;background-position:center;background-image:radial-gradient(120% 70% at 20% 0%,#4a5262 0%,transparent 60%),radial-gradient(90% 60% at 90% 40%,#2b303a 0%,transparent 60%),linear-gradient(160deg,#23262e,#0f1013);filter:grayscale(.85) contrast(.95);opacity:.55;z-index:0}
-.page-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.72) 50%,rgba(0,0,0,.88) 100%);z-index:0}
+.page-bg{position:fixed;inset:0;background-size:cover;background-position:center;background-image:radial-gradient(120% 70% at 20% 0%,#4a5262 0%,transparent 60%),radial-gradient(90% 60% at 90% 40%,#2b303a 0%,transparent 60%),linear-gradient(160deg,#23262e,#0f1013);filter:grayscale(.85) contrast(.95);opacity:.55;z-index:0}
+.page-scrim{position:fixed;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.72) 50%,rgba(0,0,0,.88) 100%);z-index:0}
 .head,.view,.nav{position:relative;z-index:1}
 .app,.app .view{--bg:#0f1013;--fg:#fff;--dim:rgba(255,255,255,.7);--mut:rgba(255,255,255,.5);--ln:rgba(255,255,255,.12)}
 .head{padding:calc(14px + var(--sat,0px)) 22px 0}
@@ -214,7 +216,8 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 .brand-col{display:flex;flex-direction:column;gap:3px}
 .brand .head-meta{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55)}
 .icon-btn{width:44px;height:44px;border-radius:13px;border:none;background:rgba(255,255,255,.12);color:#fff}
-.view:not(#view-home){padding-bottom:calc(24px + var(--sab,0px))}
+.view:not(#view-home){padding-top:calc(6px + var(--sat,0px));padding-bottom:calc(24px + var(--sab,0px))}
+#view-rules,#view-subs{padding-top:calc(10px + var(--sat,0px))}
 .sec-title{padding:22px 22px 2px;font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:-.03em;text-transform:uppercase;color:#fff}
 .sec-sub{padding:0 22px 12px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:rgba(255,255,255,.55)}
 .view:not(#view-home) .row{margin:0 16px 6px;padding:13px 14px;border:none;border-radius:14px;background:rgba(20,20,22,.78);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);min-height:52px}
@@ -240,7 +243,7 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 .sub-modal{background:rgba(0,0,0,.55)}
 .sub-modal-card{border:none;border-radius:24px 24px 0 0;background:#141416;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 -16px 50px rgba(0,0,0,.4);padding:14px 22px calc(22px + var(--sab,0px))}
 .sub-modal-card::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.35);margin:0 auto 14px}
-.sub-modal-title{font-family:var(--display);font-weight:900;font-size:18px;letter-spacing:-.02em;text-transform:uppercase;color:#fff}
+.sub-modal-title{font-family:var(--display);font-weight:900;font-size:17px;letter-spacing:-.02em;text-transform:uppercase;color:#fff;text-align:center}
 .sub-modal-hint{font-family:var(--mono);color:rgba(255,255,255,.55)}
 .sub-seg{gap:4px;padding:3px;border-radius:12px;background:rgba(255,255,255,.1)}
 .sub-seg-btn{border:none;border-radius:9px;min-height:40px;color:rgba(255,255,255,.7)}
@@ -304,19 +307,44 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 .chain-warp .s{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:rgba(255,255,255,.5)}
 .chain-idx{flex:none;min-width:22px;height:22px;border-radius:11px;background:#fff;color:#111;font-family:var(--mono);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
 
-/* переходы между экранами (тулбар убран, навигация свайпом/стрелками) */
-@keyframes slide-l{from{transform:translateX(56px);opacity:0}to{transform:none;opacity:1}}
-@keyframes slide-r{from{transform:translateX(-40px);opacity:0}to{transform:none;opacity:1}}
-.view.slide-l{animation:slide-l .26s cubic-bezier(.2,.8,.2,1)}
-.view.slide-r{animation:slide-r .22s cubic-bezier(.2,.8,.2,1)}
-@media (prefers-reduced-motion:reduce){.view.slide-l,.view.slide-r{animation:none}}
+/* переходы между экранами: iOS-push (новый въезжает справа, старый уходит влево под затемнение).
+   Экраны прозрачные (общие обои), поэтому на время перехода — непрозрачная подложка, иначе просвечивают друг сквозь друга */
+@keyframes push-in{from{transform:translateX(100%)}to{transform:none}}
+@keyframes push-out{from{transform:none}to{transform:translateX(-30%)}}
+@keyframes pop-in{from{transform:translateX(-30%)}to{transform:none}}
+@keyframes pop-out{from{transform:none}to{transform:translateX(100%)}}
+@keyframes dim-on{from{opacity:0}to{opacity:1}}
+@keyframes dim-off{from{opacity:1}to{opacity:0}}
+.view.push-in,.view.push-out,.view.pop-in,.view.pop-out,.view.drag-over,.view.drag-under{position:absolute;inset:0;will-change:transform;overflow:hidden;background:#0f1013;isolation:isolate}
+/* та же подложка, что у .page-bg + .page-scrim, только внутри движущегося экрана */
+.view.push-in::before,.view.push-out::before,.view.pop-in::before,.view.pop-out::before,.view.drag-over::before,.view.drag-under::before{content:"";position:absolute;inset:0;z-index:-2;background:var(--wp-img,radial-gradient(120% 70% at 20% 0%,#4a5262 0%,transparent 60%),radial-gradient(90% 60% at 90% 40%,#2b303a 0%,transparent 60%),linear-gradient(160deg,#23262e,#0f1013)) center/cover;filter:grayscale(.85) contrast(.95);opacity:.55}
+.view.push-in .page-scrim-x,.view.push-out .page-scrim-x{display:none}
+.view.push-in>.scrim-layer,.view.push-out>.scrim-layer,.view.pop-in>.scrim-layer,.view.pop-out>.scrim-layer,.view.drag-over>.scrim-layer,.view.drag-under>.scrim-layer{display:block}
+.scrim-layer{display:none;position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.72) 50%,rgba(0,0,0,.88) 100%)}
+.view.push-in{animation:push-in .38s cubic-bezier(.32,.72,0,1) both;z-index:4}
+.view.push-out{animation:push-out .38s cubic-bezier(.32,.72,0,1) both;z-index:2;pointer-events:none}
+.view.pop-in{animation:pop-in .38s cubic-bezier(.32,.72,0,1) both;z-index:2}
+.view.pop-out{animation:pop-out .38s cubic-bezier(.32,.72,0,1) both;z-index:4;pointer-events:none}
+/* затемнение уходящего/возвращающегося экрана — отдельным слоем, чтобы не тянуть тень и прозрачность на движущемся */
+.view.push-out::after,.view.pop-in::after{content:"";position:absolute;inset:0;background:#000;pointer-events:none;z-index:9}
+.view.push-out::after{animation:dim-on .38s cubic-bezier(.32,.72,0,1) both;opacity:.45}
+.view.pop-in::after{animation:dim-off .38s cubic-bezier(.32,.72,0,1) both}
+.view.anim{transition:transform 400ms cubic-bezier(.32,.72,0,1),opacity 400ms cubic-bezier(.32,.72,0,1)}
+/* edge-swipe назад: верхний экран тянется за пальцем, нижний выезжает из -30% и светлеет (--dim) */
+.view.drag-over{z-index:4;box-shadow:-8px 0 30px rgba(0,0,0,.35)}
+.view.drag-under{z-index:2}
+.view.drag-under::after{content:"";position:absolute;inset:0;background:#000;opacity:var(--dim,.45);pointer-events:none;z-index:9}
+.view.drag-under.anim::after{transition:opacity 400ms cubic-bezier(.32,.72,0,1)}
+@media (prefers-reduced-motion:reduce){.view.push-in,.view.push-out,.view.pop-in,.view.pop-out,.view.push-out::after,.view.pop-in::after{animation:none}}
 
-/* «Правила» — выдвижная панель справа: тянется за пальцем, пружинит, вибрирует при защёлкивании */
-#view-rules{position:absolute;inset:0;z-index:6;transform:translateX(100%);will-change:transform;background:rgba(15,16,19,.9);box-shadow:-1px 0 0 rgba(255,255,255,.08),-40px 0 80px rgba(0,0,0,.55);padding-top:calc(10px + var(--sat,0px))}
+/* выдвижные панели: «Правила» справа, «Подписки» слева — тянутся за пальцем, пружинят, вибрируют при защёлкивании */
+#view-rules,#view-subs{position:absolute;inset:0;z-index:6;will-change:transform;background:rgba(15,16,19,.9);padding-top:calc(10px + var(--sat,0px));overflow-y:auto}
+#view-rules{transform:translateX(100%);box-shadow:-1px 0 0 rgba(255,255,255,.08),-40px 0 80px rgba(0,0,0,.55)}
+#view-subs{transform:translateX(-100%);box-shadow:1px 0 0 rgba(255,255,255,.08),40px 0 80px rgba(0,0,0,.55)}
 #drawer-dim{position:absolute;inset:0;z-index:5;background:#000;opacity:0;pointer-events:none}
 #view-home{will-change:transform;transform-origin:50% 50%}
-#view-rules.anim,#view-home.anim,#drawer-dim.anim{transition:transform 480ms cubic-bezier(.22,1.28,.34,1),opacity 480ms cubic-bezier(.22,1,.36,1)}
-#view-rules.hidden{display:none}
+#view-rules.anim,#view-subs.anim,#view-home.anim,#drawer-dim.anim{transition:transform 480ms cubic-bezier(.22,1.28,.34,1),opacity 480ms cubic-bezier(.22,1,.36,1)}
+#view-rules.hidden,#view-subs.hidden{display:none}
 
 .sub-logo{width:38px;height:38px;border-radius:11px;object-fit:cover;flex:none;background:rgba(255,255,255,.1)}
 .sub-logo.dot{width:10px;height:10px;border-radius:50%;margin:0 14px;background:rgba(255,255,255,.25)}
@@ -333,6 +361,62 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 /* клавиатура: листы с полями ввода поднимаются над ней (--kb из MainActivity) */
 .sub-modal{bottom:var(--kb,0px)}
 .sub-modal-card{max-height:calc(88vh - var(--kb,0px))}
+/* ===== iOS-стиль внутренних экранов (общий для обеих платформ) ===== */
+/* группированные списки: соседние строки сливаются в одну карточку с разделителями */
+.view:not(#view-home) .row{margin:0 16px;border-radius:0;box-shadow:none;background:rgba(28,28,30,.82);padding:12px 16px;min-height:50px;gap:14px;position:relative}
+.view:not(#view-home) .row+.row{margin-top:0}
+.view:not(#view-home) .row+.row::before{content:"";position:absolute;left:16px;right:0;top:0;height:1px;background:rgba(255,255,255,.1)}
+.view:not(#view-home) .row:first-child,.view:not(#view-home) .grp-label+.row,.view:not(#view-home) .sec-sub+.row,.view:not(#view-home) .list-note+.row,.view:not(#view-home) .mode-seg+.row,.view:not(#view-home) div:not(.row)+.row{border-top-left-radius:14px;border-top-right-radius:14px}
+.view:not(#view-home) .row:last-child,.view:not(#view-home) .row:has(+ :not(.row)){border-bottom-left-radius:14px;border-bottom-right-radius:14px;margin-bottom:8px}
+.view:not(#view-home) .row:active{background:rgba(58,58,62,.85)}
+.row .t{font-size:16px;font-weight:500;letter-spacing:-.01em}
+.row .s{margin-top:3px}
+/* шеврон — тонкий системный, а не символ */
+.row .chev{width:18px;height:18px;font-size:0;color:rgba(255,255,255,.3);background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='.35' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center/18px no-repeat}
+.row .chev[onclick]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='.55' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");width:36px;height:36px;margin:-9px -9px -9px 0;background-size:16px}
+.row.sub-on{box-shadow:none}
+.row.sub-on .t::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#30d158;margin-left:8px;vertical-align:2px}
+.sub-logo.dot{display:none}
+.sub-logo{width:34px;height:34px;border-radius:9px}
+/* тумблер iOS: 51×31, зелёный во включённом состоянии */
+.toggle{width:51px;height:31px;border-radius:16px;border:none;background:rgba(120,120,128,.32);transition:background .25s}
+.toggle::after{left:2px;width:27px;height:27px;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.25),0 1px 1px rgba(0,0,0,.12);transition:left .25s cubic-bezier(.2,.8,.2,1)}
+.toggle.on{background:#34c759;border:none}
+.toggle.on::after{left:22px;width:27px;height:27px;background:#fff;background-image:none}
+.chk{border-radius:50%;border-color:rgba(255,255,255,.35)}
+.chk.on{background:#34c759;border-color:#34c759;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E");background-size:12px;background-position:center;background-repeat:no-repeat}
+/* сегменты: UISegmentedControl */
+.mode-seg,.sub-seg{gap:2px;padding:2px;border-radius:9px;background:rgba(118,118,128,.24)}
+.mode-seg button,.sub-seg-btn{border-radius:7px;min-height:32px;font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:rgba(255,255,255,.85)}
+.mode-seg button.active,.sub-seg-btn.active{background:#636366;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}
+/* заголовок страницы: крупный, кнопка назад — шеврон + подпись */
+.back-row{padding:6px 16px 4px;gap:2px;min-height:44px;align-items:center}
+.back-row .bk{width:auto;height:44px;padding:0 6px 0 0;border-radius:0;background:none;font-size:0;color:#fff;display:flex;align-items:center}
+.back-row .bk::before{content:"";width:24px;height:24px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 5l-7 7 7 7'/%3E%3C/svg%3E") center/24px no-repeat}
+.back-row .bk.bk-x{margin-left:auto;padding:0 0 0 6px}
+.back-row .bk.bk-x::before{transform:rotate(180deg)}
+.back-row .sec-title{font-size:24px;letter-spacing:-.03em;line-height:1.05}
+.back-row + .sec-sub,#view-apps .sec-sub{padding-left:48px;padding-bottom:14px}
+.grp-label{padding:20px 32px 7px;font-size:12px;letter-spacing:.02em;text-transform:none;color:rgba(255,255,255,.55);font-family:-apple-system,system-ui,sans-serif;font-weight:400}
+.grp-label:first-of-type{padding-top:12px}
+.list-note{padding:8px 32px 6px;font-family:-apple-system,system-ui,sans-serif;font-size:12.5px;letter-spacing:0;color:rgba(255,255,255,.5);line-height:1.45}
+.view:not(#view-home) .row+.list-note{margin-top:-2px}
+/* листы: grabber, пружина снизу */
+.sub-modal-card,.cover-sheet{border-radius:20px 20px 0 0;background:#1c1c1e;box-shadow:0 -1px 0 rgba(255,255,255,.08),0 -16px 50px rgba(0,0,0,.45);animation:sheet-in .42s cubic-bezier(.32,.72,0,1)}
+.sub-modal-card::before{width:36px;height:5px;background:rgba(255,255,255,.3);margin:0 auto 16px}
+@keyframes sheet-in{from{transform:translateY(100%)}to{transform:none}}
+@keyframes sheet-out{from{transform:none}to{transform:translateY(100%)}}
+.sub-modal{animation:dim-in .3s ease-out}
+@keyframes dim-in{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.55)}}
+.sub-input,.apps-search{border:none;border-radius:12px;background:rgba(118,118,128,.24);font-family:-apple-system,system-ui,sans-serif;font-size:16px}
+.sub-input:focus,.apps-search:focus{border:none;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.sub-btn{border-radius:14px;min-height:50px;font-size:16px;font-weight:600;background:rgba(118,118,128,.24)}
+.sub-btn.primary{background:#fff;color:#111;font-family:-apple-system,system-ui,sans-serif;font-size:16px;letter-spacing:0;text-transform:none}
+/* тост — баннер сверху, как системное уведомление */
+#mise-toast{top:calc(10px + var(--sat,0px))!important;bottom:auto!important;left:12px!important;right:12px!important;background:rgba(44,44,46,.96)!important;color:#fff!important;border-radius:16px!important;padding:14px 18px!important;font-size:14px!important;box-shadow:0 8px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.1)!important;transform:translateY(-16px);transition:opacity .25s,transform .35s cubic-bezier(.32,.72,0,1)!important}
+#mise-toast.show{transform:none}
+html.ios .android-only{display:none!important}
+html:not(.ios) .ios-only{display:none!important}
 </style>
 </head>
 <body>
@@ -383,16 +467,17 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 
   <!-- СЕРВЕРЫ -->
   <div class="view hidden" id="view-servers">
-    <div class="back-row" onclick="go('rules')" style="padding:22px 24px 0"><span class="bk">‹</span><div class="sec-sub" style="padding:0;margin:0">ПРАВИЛА</div></div>
-    <div class="sec-title">Серверы</div>
+    <div class="scrim-layer"></div>
+    <div class="back-row" onclick="go('home')"><span class="bk">‹</span><div class="sec-title" style="margin:0">Серверы</div></div>
     <div class="sec-sub" id="servers-sub">НЕ ПОДКЛЮЧЕНО</div>
     <div id="server-list"></div>
   </div>
 
   <!-- ПОДПИСКИ -->
   <div class="view hidden" id="view-subs">
-    <div class="back-row" onclick="go('settings')"><span class="bk">‹</span><div class="sec-title" style="margin:0">Подписки</div></div>
-    <div class="sec-sub" id="subs-count">НЕТ ПОДПИСОК</div>
+    <div class="scrim-layer"></div>
+    <div class="back-row" onclick="go('home')" style="padding-left:24px"><div class="sec-title" style="margin:0">Подписки</div><span class="bk bk-x">›</span></div>
+    <div class="sec-sub" id="subs-count" style="padding-left:24px">НЕТ ПОДПИСОК</div>
     <div id="subs-list"></div>
     <div class="row" style="color:var(--dim)" onclick="addSubscription()"><div class="grow"><div class="t">+ Добавить подписку</div><div class="s">ТАП ПО ПОДПИСКЕ — СДЕЛАТЬ АКТИВНОЙ</div></div></div>
     <div class="list-note">Панель отдаёт формат конфига по User-Agent — он свой у каждой подписки, меняется тапом по метке в строке. Клиент понимает все три: конфиг mihomo (YAML), конфиг Xray (JSON) и список ссылок — конвертация в формат ядра происходит на устройстве.</div>
@@ -401,12 +486,13 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
   <!-- ПРАВИЛА -->
   <div id="drawer-dim" class="hidden"></div>
   <div class="view hidden" id="view-rules">
+    <div class="scrim-layer"></div>
     <div class="back-row" onclick="go('home')"><span class="bk">‹</span><div class="sec-title" style="margin:0">Правила</div></div>
     <div class="sec-sub">КУДА ПУСКАТЬ ТРАФИК</div>
     <div class="mode-seg" id="mode-seg">
       <button data-v="rule" onclick="setModeVal('rule')">Правила</button><button data-v="global" onclick="setModeVal('global')">Глобально</button><button data-v="direct" onclick="setModeVal('direct')">Прямой</button>
     </div>
-    <div class="row" onclick="appsBack='rules';go('apps')"><div class="grow"><div class="t">Роутинг приложений</div><div class="s" id="split-sub2">РАЗДЕЛЬНЫЙ ТУННЕЛЬ</div></div><span class="chev">›</span></div>
+    <div class="row android-only" onclick="appsBack='rules';closePanel('rules',false);go('apps')"><div class="grow"><div class="t">Роутинг приложений</div><div class="s" id="split-sub2">РАЗДЕЛЬНЫЙ ТУННЕЛЬ</div></div><span class="chev">›</span></div>
     <div class="row" id="expert-row" onclick="openGroups()" style="display:none"><div class="grow"><div class="t">Селекторы групп</div><div class="s">РЕЖИМ ЭКСПЕРТА · ГРУППЫ ПОДПИСКИ</div></div><span class="chev">›</span></div>
 
     <div class="list-note">Маршрутизация приходит из подписки: российские сайты, реклама и локальная сеть уже настроены на стороне панели.</div>
@@ -415,6 +501,7 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 
   <!-- ЦЕПОЧКИ -->
   <div class="view hidden" id="view-chains">
+    <div class="scrim-layer"></div>
     <div class="back-row" onclick="go('settings')"><span class="bk">‹</span><div class="sec-title" style="margin:0">Цепочки</div></div>
     <div class="sec-sub">ТРАФИК ЧЕРЕЗ ДВА СЕРВЕРА ПОДРЯД</div>
     <div id="chain-list"></div>
@@ -424,16 +511,18 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 
   <!-- НАСТРОЙКИ -->
   <div class="view hidden" id="view-settings">
+    <div class="scrim-layer"></div>
     <div class="back-row" onclick="go('home')"><span class="bk">‹</span><div class="sec-title" style="margin:0">Настройки</div></div>
     <div class="sec-sub" id="ver-sub">MISETANIBOX</div>
     <div class="grp-label">Подключение</div>
     <div class="row" onclick="go('subs')"><div class="grow"><div class="t">Подписки</div><div class="s" id="subs-sub-row">НЕТ ПОДПИСОК</div></div><span class="chev">›</span></div>
     <div class="row" onclick="go('rules')"><div class="grow"><div class="t">Правила</div><div class="s">РЕЖИМ · РОУТИНГ · СЕЛЕКТОРЫ</div></div><span class="chev">›</span></div>
     <div class="grp-label">Туннель</div>
-    <div class="row" onclick="appsBack='settings';go('apps')"><div class="grow"><div class="t">Роутинг приложений</div><div class="s" id="split-sub">ПО ПРИЛОЖЕНИЯМ · ВЫКЛ</div></div><span class="chev">›</span></div>
+    <div class="row android-only" onclick="appsBack='settings';go('apps')"><div class="grow"><div class="t">Роутинг приложений</div><div class="s" id="split-sub">ПО ПРИЛОЖЕНИЯМ · ВЫКЛ</div></div><span class="chev">›</span></div>
     <div class="row" onclick="go('chains')"><div class="grow"><div class="t">Цепочки</div><div class="s" id="chains-sub">НЕТ ЦЕПОЧЕК</div></div><span class="chev">›</span></div>
     <div class="row"><div class="grow"><div class="t">Автозапуск</div><div class="s">ПОДНЯТЬ ТУННЕЛЬ ПРИ ВКЛЮЧЕНИИ УСТРОЙСТВА</div></div><button class="toggle" id="tgl-autostart" onclick="toggleAutostart(this)"></button></div>
-    <div class="list-note">Плитка в шторке и виджет на рабочем столе включают VPN одним тапом — добавь их через системное меню.</div>
+    <div class="list-note android-only">Плитка в шторке и виджет на рабочем столе включают VPN одним тапом — добавь их через системное меню.</div>
+    <div class="list-note ios-only">Включить VPN можно из Настроек iOS → VPN или командой Siri; автозапуск поднимает туннель при любом подключении к сети.</div>
     <div class="grp-label">Интерфейс</div>
     <div class="row"><div class="grow"><div class="t">Селекторы групп</div><div class="s">РЕЖИМ ЭКСПЕРТА · ГРУППЫ ПОДПИСКИ В «ПРАВИЛАХ»</div></div><button class="toggle" id="tgl-expert" onclick="toggleExpert(this)"></button></div>
     <div class="row" onclick="pickWallpaper()"><div class="grow"><div class="t">Обои главной</div><div class="s">СВОЯ КАРТИНКА НА ОБЛОЖКЕ</div></div><span class="chev">›</span></div>
@@ -444,6 +533,7 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 
   <!-- РАЗДЕЛЬНЫЙ ТУННЕЛЬ ПО ПРИЛОЖЕНИЯМ -->
   <div class="view hidden" id="view-apps">
+    <div class="scrim-layer"></div>
     <div class="back-row" onclick="go(appsBack||'rules')"><span class="bk">‹</span><div class="sec-title" style="margin:0">Роутинг приложений</div></div>
     <div class="sec-sub">КАКИЕ ПРИЛОЖЕНИЯ ИДУТ ЧЕРЕЗ VPN</div>
     <div class="sub-seg">
@@ -459,9 +549,6 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
   <div class="sub-modal hidden" id="sub-modal" onclick="if(event.target===this)closeSubModal()">
     <div class="sub-modal-card">
       <div class="sub-modal-title">Подписка</div>
-      <div class="sub-seg">
-        <button class="sub-seg-btn active" id="seg-url" onclick="setSubMode('url')">По ссылке</button>
-      </div>
       <div class="sub-modal-hint" id="sub-hint">Ссылка на конфиг: mihomo YAML, Xray JSON или список ссылок</div>
       <input id="sub-input" class="sub-input" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://...">
       <div class="sub-modal-btns">
@@ -525,8 +612,8 @@ function toast(msg){
   if(!t){ t=document.createElement('div'); t.id='mise-toast'; document.body.appendChild(t);
     t.style.cssText='position:fixed;left:16px;right:16px;bottom:calc(80px + var(--sab,0px));z-index:100;background:var(--fg);color:var(--bg);padding:13px 16px;border-radius:8px;font-size:13px;font-weight:600;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none';
   }
-  t.textContent=msg; t.style.opacity='1';
-  clearTimeout(t._h); t._h=setTimeout(()=>{ t.style.opacity='0'; }, 3200);
+  t.textContent=msg; t.style.opacity='1'; t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>{ t.style.opacity='0'; t.classList.remove('show'); }, 3200);
 }
 
 // ---------- определение страны по имени ноды ----------
@@ -590,97 +677,183 @@ let appsBack='rules';
 function go(t){
   if(t==='servers'){ openServerSheet(); return; }
   const prev=tab;
-  if(t==='rules'){ if(prev!=='home'&&prev!=='rules') showView('home',false); openDrawer(true); return; }
-  if(prev==='rules'){ if(t==='home'){ closeDrawer(true); return; } closeDrawer(false); }
-  showView(t, prev!==t);
+  // выдвижные панели: правила справа, подписки слева
+  if(t==='rules'||t==='subs'){ if(prev!=='home'&&!PANELS[prev]) showView('home',false); if(PANELS[prev]&&prev!==t) closePanel(prev,false); openPanel(t,true); return; }
+  if(PANELS[prev]){ if(t==='home'){ closePanel(prev,true); return; } closePanel(prev,false); }
+  if(t==='home'){ popView(); return; }
+  pushView(t);
 }
-function showView(t, anim){
-  tab=t;
-  document.querySelector('.app')?.classList.toggle('tab-home', t==='home');
-  for(const v of document.querySelectorAll('.view')){ if(v.id==='view-rules') continue; v.classList.add('hidden'); v.classList.remove('slide-l','slide-r'); }
-  const el=document.getElementById('view-'+t); el.classList.remove('hidden');
-  if(anim) el.classList.add(t==='home'?'slide-r':'slide-l');
+// стек экранов: главная → настройки → цепочки/роутинг (iOS-push: новый въезжает справа, старый уходит влево)
+let navStack=[];
+function prepView(t){
   if(t==='settings'){ const r=document.getElementById('subs-sub-row'); if(r){ const n=subs().length; const a=activeSub(); r.textContent=n?((a&&(a.title||a.name))||n+' ПОДПИСОК').toUpperCase():'НЕТ ПОДПИСОК'; } applyExpertUi(); }
   if(t==='chains') renderChains();
   if(t==='apps') openAppsScreen();
 }
-// --- панель правил
-let drawerOpen=false, drawerTimer=null;
+function showView(t, anim){
+  tab=t; navStack=t==='home'?[]:[t];
+  document.querySelector('.app')?.classList.toggle('tab-home', t==='home');
+  for(const v of document.querySelectorAll('.view')){ if(PANELS[v.id.slice(5)]) continue; v.classList.add('hidden'); v.classList.remove('push-in','push-out','pop-in','pop-out'); v.style.transform=''; v.style.opacity=''; }
+  const el=document.getElementById('view-'+t); el.classList.remove('hidden');
+  prepView(t);
+}
+function pushView(t){
+  if(tab===t) return;
+  const from=document.getElementById('view-'+tab), to=document.getElementById('view-'+t);
+  prepView(t);
+  navStack.push(t); tab=t;
+  document.querySelector('.app')?.classList.remove('tab-home');
+  to.classList.remove('hidden','pop-in','pop-out','push-out'); to.scrollTop=0;
+  from.classList.remove('push-in','pop-in','pop-out');
+  to.classList.add('push-in'); from.classList.add('push-out');
+  haptic('tick');
+  transEnd(to, ()=>{ from.classList.add('hidden'); from.classList.remove('push-out'); to.classList.remove('push-in'); });
+}
+// конец перехода: по animationend въезжающего экрана, с запасным таймером
+let transTimer=null;
+function transEnd(el, fn){
+  clearTimeout(transTimer);
+  let done=false; const fin=()=>{ if(done) return; done=true; el.removeEventListener('animationend',fin); clearTimeout(transTimer); fn(); };
+  el.addEventListener('animationend', fin); transTimer=setTimeout(fin, 450);
+}
+function popView(){
+  const cur=tab; if(cur==='home') return;
+  navStack.pop();
+  const back=navStack[navStack.length-1]||'home';
+  const from=document.getElementById('view-'+cur), to=document.getElementById('view-'+back);
+  tab=back; prepView(back);
+  document.querySelector('.app')?.classList.toggle('tab-home', back==='home');
+  to.classList.remove('hidden','push-in','push-out','pop-out'); to.style.transform=''; to.style.opacity='';
+  from.classList.remove('push-in','push-out','pop-in'); from.style.transform='';
+  to.classList.add('pop-in'); from.classList.add('pop-out');
+  transEnd(from, ()=>{ from.classList.add('hidden'); from.classList.remove('pop-out'); to.classList.remove('pop-in'); });
+}
+// --- выдвижные панели: правила (справа) и подписки (слева)
+const PANELS={rules:{side:1}, subs:{side:-1}};
+let panelOpen='', panelTimer=null;
 const vw=()=>window.innerWidth;
 function haptic(kind){ try{ if(Vpn&&Vpn.haptic) Vpn.haptic({kind}); else if(navigator.vibrate) navigator.vibrate(kind==='heavy'?28:8); }catch{} }
-function setDrawerX(x, anim){
-  const d=document.getElementById('view-rules'), h=document.getElementById('view-home'), dim=document.getElementById('drawer-dim');
+// x — смещение панели от её открытого положения в сторону края (0 = открыта, vw = закрыта)
+function setPanelX(name, x, anim){
+  const side=PANELS[name].side;
+  const d=document.getElementById('view-'+name), h=document.getElementById('view-home'), dim=document.getElementById('drawer-dim');
   for(const e of [d,h,dim]) e.classList.toggle('anim', !!anim);
   const p=1-Math.min(1,Math.max(0,x/vw()));
-  d.style.transform='translateX('+x+'px)';
-  h.style.transform='translateX('+(-p*vw()*.18)+'px) scale('+(1-p*.04)+')';
+  d.style.transform='translateX('+(side*x)+'px)';
+  h.style.transform='translateX('+(-side*p*vw()*.18)+'px) scale('+(1-p*.04)+')';
   dim.style.opacity=(p*.5).toFixed(3);
 }
-function prepDrawer(){
-  const d=document.getElementById('view-rules'), dim=document.getElementById('drawer-dim');
-  clearTimeout(drawerTimer);
-  if(d.classList.contains('hidden')){ setDrawerX(vw(),false); d.classList.remove('hidden'); dim.classList.remove('hidden'); void d.offsetWidth; }
-  applyModeLabel(); applyExpertUi(); const ss=document.getElementById('split-sub2'), so=document.getElementById('split-sub'); if(ss&&so) ss.textContent=so.textContent;
+function prepPanel(name){
+  const d=document.getElementById('view-'+name), dim=document.getElementById('drawer-dim');
+  clearTimeout(panelTimer);
+  if(d.classList.contains('hidden')){ setPanelX(name,vw(),false); d.classList.remove('hidden'); dim.classList.remove('hidden'); void d.offsetWidth; }
+  if(name==='rules'){ applyModeLabel(); applyExpertUi(); const ss=document.getElementById('split-sub2'), so=document.getElementById('split-sub'); if(ss&&so) ss.textContent=so.textContent; }
+  if(name==='subs') renderSubs();
 }
-function openDrawer(anim){
-  prepDrawer(); const was=drawerOpen; drawerOpen=true; tab='rules';
-  requestAnimationFrame(()=>setDrawerX(0,anim));
+function openPanel(name, anim){
+  prepPanel(name); const was=panelOpen===name; panelOpen=name; tab=name;
+  requestAnimationFrame(()=>setPanelX(name,0,anim));
   if(!was) haptic('heavy');
 }
-function closeDrawer(anim){
-  const d=document.getElementById('view-rules'), dim=document.getElementById('drawer-dim');
-  const was=drawerOpen; drawerOpen=false; tab='home';
+function closePanel(name, anim){
+  const d=document.getElementById('view-'+name), dim=document.getElementById('drawer-dim');
+  const was=panelOpen===name; if(was) panelOpen=''; tab='home';
   document.querySelector('.app')?.classList.add('tab-home');
   if(d.classList.contains('hidden')) return;
-  setDrawerX(vw(),anim);
+  setPanelX(name,vw(),anim);
   if(was&&anim) haptic('tick');
-  clearTimeout(drawerTimer);
-  drawerTimer=setTimeout(()=>{ if(!drawerOpen){ d.classList.add('hidden'); dim.classList.add('hidden'); } }, anim?500:0);
+  clearTimeout(panelTimer);
+  panelTimer=setTimeout(()=>{ if(!panelOpen){ d.classList.add('hidden'); dim.classList.add('hidden'); } }, anim?500:0);
 }
+// совместимость со старыми вызовами
+function openDrawer(anim){ openPanel('rules',anim); }
+function closeDrawer(anim){ closePanel(panelOpen||'rules',anim); }
 
-// ---------- свайп-навигация (тулбара нет): панель правил тянется за пальцем ----------
+// ---------- свайп-навигация: панели тянутся за пальцем; edge-swipe от левого края = «назад» на push-экранах ----------
 function overlayOpen(){ return [...document.querySelectorAll('.sub-modal,.cover-sheet-overlay')].some(e=>!e.classList.contains('hidden')); }
 (function(){
-  let sx=0, sy=0, drag=false, fromOpen=false, lastX=0, lastT=0, vx=0, curX=0;
+  let sx=0, sy=0, drag=false, mode='', name='', fromOpen=false, lastX=0, lastT=0, vx=0, curX=0, backFrom=null, backTo=null;
   const rubber=v=>v*.28;
-  document.addEventListener('touchstart', e=>{ if(e.touches.length!==1) return; const t=e.touches[0]; sx=lastX=t.clientX; sy=t.clientY; lastT=Date.now(); drag=false; vx=0; fromOpen=(tab==='rules'); }, {passive:true});
+  document.addEventListener('touchstart', e=>{ if(e.touches.length!==1) return; const t=e.touches[0]; sx=lastX=t.clientX; sy=t.clientY; lastT=Date.now(); drag=false; mode=''; vx=0; fromOpen=!!PANELS[tab]; name=fromOpen?tab:''; }, {passive:true});
   document.addEventListener('touchmove', e=>{
-    if(overlayOpen() || (tab!=='home'&&tab!=='rules') || e.touches.length!==1) return;
+    if(overlayOpen() || e.touches.length!==1) return;
     const t=e.touches[0]; const dx=t.clientX-sx, dy=t.clientY-sy;
     if(!drag){
       if(Math.abs(dx)<12 || Math.abs(dx)<Math.abs(dy)*1.3) return;
-      if((!fromOpen&&dx>0) || (fromOpen&&dx<0)) return;
-      drag=true; if(!fromOpen) prepDrawer();
+      if(tab==='home'){ name = dx<0 ? 'rules' : 'subs'; mode='panel'; prepPanel(name); }
+      else if(fromOpen){ if(Math.sign(dx)!==PANELS[name].side) return; mode='panel'; }
+      else if(sx<28 && dx>0){ // edge-swipe назад: оба экрана на непрозрачных подложках, затемнение нижнего через --dim
+        mode='back'; backFrom=document.getElementById('view-'+tab); backTo=document.getElementById('view-'+(navStack[navStack.length-2]||'home'));
+        backTo.classList.remove('hidden','push-out','push-in','pop-in','pop-out'); backFrom.classList.remove('push-in','push-out','pop-in','pop-out');
+        backTo.classList.add('drag-under'); backFrom.classList.add('drag-over'); backTo.style.transition='none'; backFrom.style.transition='none';
+      }
+      else return;
+      drag=true;
     }
     const now=Date.now(); vx=(t.clientX-lastX)/Math.max(1,now-lastT); lastX=t.clientX; lastT=now;
-    let x = fromOpen ? dx : vw()+dx;
-    if(x<0) x=-rubber(-x);
-    if(x>vw()) x=vw()+rubber(x-vw());
-    curX=x; setDrawerX(x,false);
+    if(mode==='panel'){
+      const side=PANELS[name].side;
+      // закрытая панель: x = vw + side*dx (тянем к 0); открытая: x = side*dx (уходит к краю)
+      let x = fromOpen ? side*dx : vw()+side*dx;
+      if(x<0) x=-rubber(-x);
+      if(x>vw()) x=vw()+rubber(x-vw());
+      curX=x; setPanelX(name,x,false);
+    } else if(mode==='back'){
+      const p=Math.min(1,Math.max(0,dx/vw())); curX=p;
+      backFrom.style.transform='translateX('+(p*vw())+'px)';
+      backTo.style.transform='translateX('+(-30+30*p)+'%)'; backTo.style.setProperty('--dim', String(.45*(1-p)));
+    }
   }, {passive:true});
-  document.addEventListener('touchend', e=>{
+  function endDrag(){
     if(!drag) return; drag=false;
-    const p=1-curX/vw();
-    const open = fromOpen ? !(p<.72 || vx>.45) : (p>.28 || vx<-.45);
-    if(open){ if(fromOpen){ drawerOpen=false; } openDrawer(true); } else closeDrawer(true);
-  }, {passive:true});
-  document.addEventListener('touchcancel', ()=>{ if(drag){ drag=false; (fromOpen?openDrawer:closeDrawer)(true); } }, {passive:true});
+    if(mode==='panel'){
+      const p=1-curX/vw();
+      const open = fromOpen ? !(p<.72 || vx*PANELS[name].side>.45) : (p>.28 || vx*PANELS[name].side<-.45);
+      if(open){ if(fromOpen) panelOpen=''; openPanel(name,true); } else closePanel(name,true);
+    } else if(mode==='back'){
+      backFrom.style.transition=''; backTo.style.transition='';
+      const f=backFrom, t=backTo, p0=curX;
+      const cleanup=()=>{ f.classList.remove('anim','drag-over'); t.classList.remove('anim','drag-under'); f.style.transform=''; t.style.transform=''; t.style.removeProperty('--dim'); };
+      f.classList.add('anim'); t.classList.add('anim');
+      if(p0>.3 || vx>.45){ // дожимаем назад: экран уходит вправо, нижний встаёт на место
+        f.style.transform='translateX(100%)'; t.style.transform='translateX(0)'; t.style.setProperty('--dim','0');
+        navStack.pop(); const back=navStack[navStack.length-1]||'home'; tab=back; prepView(back); document.querySelector('.app')?.classList.toggle('tab-home', back==='home');
+        setTimeout(()=>{ cleanup(); f.classList.add('hidden'); }, 420);
+      } else { // возвращаем на место
+        f.style.transform='translateX(0)'; t.style.transform='translateX(-30%)'; t.style.setProperty('--dim','.45');
+        setTimeout(()=>{ cleanup(); t.classList.add('hidden'); }, 420);
+      }
+    }
+  }
+  document.addEventListener('touchend', endDrag, {passive:true});
+  document.addEventListener('touchcancel', endDrag, {passive:true});
 })();
 // системная кнопка «назад» (MainActivity → evaluateJavascript): 'exit' = свернуть приложение
 function navBack(){
   const sheet=document.getElementById('server-sheet'); if(sheet&&!sheet.classList.contains('hidden')){ closeServerSheet(); return 'ok'; }
   for(const m of document.querySelectorAll('.sub-modal')) if(!m.classList.contains('hidden')){ m.classList.add('hidden'); return 'ok'; }
   if(tab==='home') return 'exit';
-  if(tab==='rules'){ closeDrawer(true); return 'ok'; }
-  const parent={rules:'home',settings:'home',subs:'settings',chains:'settings',apps:(typeof appsBack==='string'?appsBack:'rules'),servers:'rules'}[tab]||'home';
-  go(parent); return 'ok';
+  if(PANELS[tab]){ closePanel(tab,true); return 'ok'; }
+  popView(); return 'ok';
+}
+
+// лист серверов: тянется вниз пальцем (за ручку/шапку или когда список вверху), отпустил ниже трети — закрылся
+function sheetDrag(overlay){
+  const card=overlay.querySelector('.cover-sheet'), list=overlay.querySelector('.sheet-list');
+  let y0=0, dy=0, on=false, t0=0;
+  card.addEventListener('touchstart', e=>{ if(e.touches.length!==1) return; const inList=list&&list.contains(e.target); if(inList&&list.scrollTop>0) return; y0=e.touches[0].clientY; dy=0; on=true; t0=Date.now(); card.style.transition='none'; }, {passive:true});
+  card.addEventListener('touchmove', e=>{ if(!on) return; dy=Math.max(0,e.touches[0].clientY-y0); if(dy>0&&list&&list.contains(e.target)&&list.scrollTop>0){ on=false; card.style.transform=''; return; } card.style.transform='translateY('+dy+'px)'; }, {passive:true});
+  const end=()=>{ if(!on) return; on=false; card.style.transition='transform .32s cubic-bezier(.32,.72,0,1)'; const v=dy/Math.max(1,Date.now()-t0); if(dy>card.offsetHeight*.33||v>.6){ card.style.transform='translateY(100%)'; haptic('tick'); setTimeout(()=>{ overlay.classList.add('hidden'); card.style.transform=''; card.style.transition=''; },300); } else { card.style.transform=''; setTimeout(()=>{ card.style.transition=''; },320); } };
+  card.addEventListener('touchend', end, {passive:true}); card.addEventListener('touchcancel', end, {passive:true});
 }
 
 // ---------- Capacitor: нативный VPN-плагин ----------
-const BUILD = 'v0.21.12';
+const BUILD = 'v0.21.13';
 const Cap = window.Capacitor;
 const platform = (Cap && Cap.getPlatform) ? Cap.getPlatform() : 'web';
 const isNative = !!(Cap && Cap.isNativePlatform ? Cap.isNativePlatform() : (platform && platform!=='web'));
+// iOS не даёт роутинг по приложениям (только MDM) — прячем связанные строки
+if(platform==='ios') document.documentElement.classList.add('ios');
 const Vpn = (Cap && Cap.registerPlugin) ? Cap.registerPlugin('Vpn')
           : (Cap && Cap.Plugins ? Cap.Plugins.Vpn : null);
 
@@ -740,6 +913,7 @@ function ck(base){ return base+':'+(activeSubId()||'_'); }
 function getSubUrl(){ const s=activeSub(); return s ? s.url : (localStorage.getItem('mise_subUrl')||''); }
 function switchSub(id){
   if(id===activeSubId()) return;
+  haptic('tick');
   setActiveSub(id); renderSubs();
   const sub=subs().find(s=>s.id===id);
   _proxies=null; _mainSel=null; _providerNodes=null; for(const k of Object.keys(delays)) delete delays[k];
@@ -773,7 +947,7 @@ function delSub(id, ev){
   const list=subs().filter(s=>s.id!==id);
   saveSubs(list);
   if(activeSubId()===id){ if(list.length) setActiveSub(list[0].id); else { localStorage.removeItem('mise_subActive'); localStorage.removeItem('mise_subUrl'); } }
-  renderSubs(); toast('Подписка удалена');
+  haptic('warning'); renderSubs(); toast('Подписка удалена');
 }
 
 // ---------- User-Agent запроса подписки ----------
@@ -874,11 +1048,12 @@ function onWallpaperPicked(input){
   img.onload=()=>{ const k=Math.min(1,1200/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height); try{ localStorage.setItem('mise_wallpaper', c.toDataURL('image/jpeg',.82)); }catch(e){ toast('Картинка слишком большая'); } URL.revokeObjectURL(url); applyWallpaper(); toast('Обои обновлены'); };
   img.src=url; input.value='';
 }
-function applyWallpaper(){ const d=localStorage.getItem('mise_wallpaper'); for(const id of ['cover-bg','page-bg']){ const bg=document.getElementById(id); if(bg&&d) bg.style.backgroundImage='url('+d+')'; } }
+function applyWallpaper(){ const d=localStorage.getItem('mise_wallpaper'); for(const id of ['cover-bg','page-bg']){ const bg=document.getElementById(id); if(bg&&d) bg.style.backgroundImage='url('+d+')'; } if(d) document.documentElement.style.setProperty('--wp-img','url('+d+')'); }
 applyWallpaper();
 document.querySelector('.app')?.classList.add('tab-home');
 
 async function toggleConnect(){
+  haptic('medium');
   dbg('тап connect | native='+isNative+' plugin='+(!!Vpn)+' hasStart='+(!!(Vpn&&Vpn.start)));
   if(!isNative || !Vpn){ dbg('НЕ нативно → демо-режим (плагин недоступен!)'); setUiConnected(!connected); return; }
   if(connected){
@@ -902,9 +1077,9 @@ if(Vpn && Vpn.addListener){
   Vpn.addListener('vpnState', (s)=>{
     dbg('событие: '+s.state+(s.message?' — '+s.message:''));
     if(s.state==='diag'){ dbg('ядро: '+String(s.message||'').trim().replace(/\n/g,' | ')); return; }
-    if(s.state==='connected') setUiConnected(true);
+    if(s.state==='connected'){ haptic('success'); setUiConnected(true); }
     else if(s.state==='disconnected') setUiConnected(false);
-    else if(s.state==='error'){ setUiConnected(false); toast('VPN: '+(s.message||'ошибка')); }
+    else if(s.state==='error'){ haptic('error'); setUiConnected(false); toast('VPN: '+(s.message||'ошибка')); }
     else if(s.state==='info'){ toast(String(s.message||'')); }
   });
 }
@@ -1101,8 +1276,8 @@ async function waitForServers(){
 // ---------- лист серверов (как в Lite): Авто → страны главного селектора ----------
 const NO_EXIT=/^(Direct|Reject|RejectDrop|Pass|Compatible|Dns)$/i;
 function sheetMain(){ if(!_proxies) return null; const order=orderedGroups(_proxies); return pickMainGroup(_proxies, order); }
-function openServerSheet(){ const el=document.getElementById('server-sheet'); if(!el) return; el.classList.remove('hidden'); renderServerSheet(); if(connected) loadProxies(); else if(!safeJson(localStorage.getItem(ck('mise_lastServers')))) previewServers().then(renderServerSheet); }
-function closeServerSheet(){ const el=document.getElementById('server-sheet'); if(el) el.classList.add('hidden'); }
+function openServerSheet(){ const el=document.getElementById('server-sheet'); if(!el) return; if(!el._drag){ el._drag=1; sheetDrag(el); } el.classList.remove('hidden'); renderServerSheet(); if(connected) loadProxies(); else if(!safeJson(localStorage.getItem(ck('mise_lastServers')))) previewServers().then(renderServerSheet); }
+function closeServerSheet(){ const el=document.getElementById('server-sheet'); if(!el||el.classList.contains('hidden')) return; const c=el.querySelector('.cover-sheet'); if(c){ c.style.animation='sheet-out .28s cubic-bezier(.32,.72,0,1) forwards'; setTimeout(()=>{ el.classList.add('hidden'); c.style.animation=''; },270); } else el.classList.add('hidden'); }
 function pingAsIcon(){ const f=subFlags(); return f.pingResult==='icon' || ((f.pingType==='tcp'||f.pingType==='icmp') && f.pingResult!=='time'); }
 // пинг пункта листа: у группы (страны) — лучший из её узлов (онлайн: по .all ядра, оффлайн: по составу из YAML)
 function itemDelay(n){
@@ -1138,7 +1313,7 @@ function renderServerSheet(){
       :'<div class="sheet-empty">'+(getSubUrl()?(localStorage.getItem(ck('mise_subErr'))?'Подписка недоступна ('+esc(localStorage.getItem(ck('mise_subErr')))+'). Проверь ссылку или панель.':'Загружаю список серверов…'):'Нет серверов. Добавьте подписку.')+'</div>';
   }
 }
-async function sheetPick(group, name){ await selectNode(group, name); closeServerSheet(); }
+async function sheetPick(group, name){ haptic('tick'); await selectNode(group, name); closeServerSheet(); }
 
 async function selectNode(group, name){
   const r=await core('PUT','/proxies/'+encodeURIComponent(group),{name});
@@ -1234,11 +1409,11 @@ function renderSubs(){
 // ---------- режим маршрутизации ----------
 const MODES=[{v:'rule',l:'ПРАВИЛА'},{v:'global',l:'ГЛОБАЛЬНО'},{v:'direct',l:'ПРЯМОЙ'}];
 function curMode(){ return localStorage.getItem('mise_mode')||'rule'; }
-function setModeVal(v){ localStorage.setItem('mise_mode', v); applyModeLabel(); applyModeToCore(); }
+function setModeVal(v){ if(v!==curMode()) haptic('tick'); localStorage.setItem('mise_mode', v); applyModeLabel(); applyModeToCore(); }
 function isExpert(){ return localStorage.getItem('mise_expert')==='1'; }
 function applyExpertUi(){ const r=document.getElementById('expert-row'); if(r) r.style.display=isExpert()?'':'none'; const t=document.getElementById('tgl-expert'); if(t) t.classList.toggle('on', isExpert()); }
-function toggleExpert(btn){ localStorage.setItem('mise_expert', isExpert()?'0':'1'); applyExpertUi(); }
-function openGroups(){ tab='servers'; for(const v of document.querySelectorAll('.view')) v.classList.add('hidden'); document.getElementById('view-servers').classList.remove('hidden'); document.querySelector('.app')?.classList.remove('tab-home'); connected ? loadProxies() : previewServers(); }
+function toggleExpert(btn){ haptic('light'); localStorage.setItem('mise_expert', isExpert()?'0':'1'); applyExpertUi(); }
+function openGroups(){ closePanel('rules',false); pushView('servers'); connected ? loadProxies() : previewServers(); }
 function applyModeLabel(){ for(const b of document.querySelectorAll('#mode-seg button')) b.classList.toggle('active', b.dataset.v===curMode()); const m=MODES.find(x=>x.v===curMode())||MODES[0]; const el=document.getElementById('mode-lbl'); if(el) el.textContent=m.l; }
 async function applyModeToCore(){
   if(!connected) return;
@@ -1276,7 +1451,7 @@ function renderChains(){
   ).join('') : '<div class="list-note">Пока нет цепочек.</div>';
   refreshChainsSub();
 }
-function delChain(i){ const c=chains(); c.splice(i,1); saveChains(c); renderChains(); if(connected) toast('Применится при следующем подключении'); }
+function delChain(i){ haptic('warning'); const c=chains(); c.splice(i,1); saveChains(c); renderChains(); if(connected) toast('Применится при следующем подключении'); }
 
 let chainNodes=[];
 const WARP_NODE='WARP';
@@ -1364,7 +1539,7 @@ async function initAutostart(){
 }
 async function toggleAutostart(btn){
   const on=!btn.classList.contains('on');
-  btn.classList.toggle('on',on);
+  btn.classList.toggle('on',on); haptic('light');
   if(Vpn&&Vpn.setAutostart){ try{ await Vpn.setAutostart({on}); }catch(e){ dbg('setAutostart err: '+e); } }
   toast(on?'Автозапуск включён':'Автозапуск выключен');
 }
@@ -1388,6 +1563,7 @@ function applySplitModeUi(){
   refreshSplitSub();
 }
 function setSplitMode(m){
+  if(m!==splitMode()) haptic('tick');
   localStorage.setItem('mise_splitMode',m); applySplitModeUi();
   if(m!=='off' && !appsCache) loadAppList();
   if(connected) toast('Применится при следующем подключении');
@@ -1425,6 +1601,7 @@ function renderAppList(){
   }).join('');
 }
 function toggleApp(pkg){
+  haptic('light');
   if(splitSelected.has(pkg)) splitSelected.delete(pkg); else splitSelected.add(pkg);
   localStorage.setItem('mise_splitApps', JSON.stringify([...splitSelected]));
   renderAppList(); refreshSplitSub();
@@ -1435,7 +1612,6 @@ function toggleApp(pkg){
 let subMode='url';
 function setSubMode(m){
   subMode=m;
-  document.getElementById('seg-url').classList.toggle('active',m==='url');
   const sd=document.getElementById('seg-dns'); if(sd) sd.classList.toggle('active',m==='dns');
   const hint=document.getElementById('sub-hint'), inp=document.getElementById('sub-input');
   if(m==='dns'){ hint.textContent='Домен с TXT-записью (обход блокировки адреса)'; inp.placeholder='sub.example.com'; }
@@ -1466,10 +1642,10 @@ async function saveSubModal(){
   }
   const list=subs();
   const dup=list.find(s=>s.url===url);
-  if(dup){ setActiveSub(dup.id); closeSubModal(); renderSubs(); toast('Уже добавлена — сделал активной'); go('servers'); return; }
+  if(dup){ setActiveSub(dup.id); closeSubModal(); renderSubs(); haptic('tick'); toast('Уже добавлена — сделал активной'); go('home'); return; }
   const item={id:'s'+Date.now(), name:subName(url), url};
   list.push(item); saveSubs(list); setActiveSub(item.id); fetchSubMeta(item); refreshServerList();
-  closeSubModal(); renderSubs(); toast('Подписка добавлена'); go('servers');
+  closeSubModal(); renderSubs(); haptic('success'); toast('Подписка добавлена'); go('home'); setTimeout(openServerSheet, 450);
 }
 
 // ---------- трафик (реальный, из API ядра) ----------

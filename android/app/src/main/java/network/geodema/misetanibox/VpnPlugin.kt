@@ -193,7 +193,7 @@ class VpnPlugin : Plugin() {
         } catch (_: Exception) { 0 }
     }
 
-    // тактильный отклик: heavy = защёлкнулась панель, tick = закрылась.
+    // тактильный отклик: heavy/medium/light — удар, tick — выбор, success/warning/error — уведомление (как на iOS).
     // usage=TOUCH система глушит при выключенном «виброотклике при касании» → PHYSICAL_EMULATION
     @PluginMethod
     fun haptic(call: PluginCall) {
@@ -205,7 +205,15 @@ class VpnPlugin : Plugin() {
                 @Suppress("DEPRECATION") context.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
             }
             val effect = if (Build.VERSION.SDK_INT >= 29) {
-                android.os.VibrationEffect.createPredefined(if (kind == "heavy") android.os.VibrationEffect.EFFECT_HEAVY_CLICK else android.os.VibrationEffect.EFFECT_TICK)
+                when (kind) {
+                    "heavy" -> android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_HEAVY_CLICK)
+                    "medium" -> android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_CLICK)
+                    "light" -> android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_TICK)
+                    "success" -> android.os.VibrationEffect.createWaveform(longArrayOf(0, 12, 60, 24), -1)
+                    "warning" -> android.os.VibrationEffect.createWaveform(longArrayOf(0, 24, 60, 12), -1)
+                    "error" -> android.os.VibrationEffect.createWaveform(longArrayOf(0, 18, 50, 18, 50, 18), -1)
+                    else -> android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_TICK)
+                }
             } else {
                 android.os.VibrationEffect.createOneShot(if (kind == "heavy") 30 else 10, android.os.VibrationEffect.DEFAULT_AMPLITUDE)
             }
