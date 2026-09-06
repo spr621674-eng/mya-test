@@ -322,6 +322,9 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
 .sub-logo.dot{width:10px;height:10px;border-radius:50%;margin:0 14px;background:rgba(255,255,255,.25)}
 .sub-logo.dot.on{background:#30d158}
 .row.sub-on{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),inset 0 1px 0 rgba(255,255,255,.12)}
+.sub-ua{display:inline-block;margin-top:7px;padding:4px 8px;border-radius:7px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.6);background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.sub-ua.set{color:#fff;background:rgba(255,255,255,.16)}
+.sub-ua:active{background:rgba(255,255,255,.26)}
 .sub-actions{display:flex;gap:8px;margin:4px 16px 8px}
 .sub-actions .sub-btn{flex:1;min-height:44px}
 .sub-announce{white-space:pre-line}
@@ -392,8 +395,7 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
     <div class="sec-sub" id="subs-count">НЕТ ПОДПИСОК</div>
     <div id="subs-list"></div>
     <div class="row" style="color:var(--dim)" onclick="addSubscription()"><div class="grow"><div class="t">+ Добавить подписку</div><div class="s">ТАП ПО ПОДПИСКЕ — СДЕЛАТЬ АКТИВНОЙ</div></div></div>
-    <div class="row" onclick="openUaModal()"><div class="grow"><div class="t">User-Agent</div><div class="s" id="ua-sub">CLASH-META/MIHOMO</div></div><span class="chev">›</span></div>
-    <div class="list-note">Панель отдаёт формат конфига по User-Agent. Клиент понимает все три: конфиг mihomo (YAML), конфиг Xray (JSON) и список ссылок — конвертация в формат ядра происходит на устройстве.</div>
+    <div class="list-note">Панель отдаёт формат конфига по User-Agent — он свой у каждой подписки, меняется тапом по метке в строке. Клиент понимает все три: конфиг mihomo (YAML), конфиг Xray (JSON) и список ссылок — конвертация в формат ядра происходит на устройстве.</div>
   </div>
 
   <!-- ПРАВИЛА -->
@@ -473,7 +475,7 @@ body{background:var(--bg);color:var(--fg);font-family:-apple-system,Roboto,'Sego
   <div class="sub-modal hidden" id="ua-modal" onclick="if(event.target===this)closeUaModal()">
     <div class="sub-modal-card">
       <div class="sub-modal-title">User-Agent</div>
-      <div class="sub-modal-hint">Каким клиентом представляться панели</div>
+      <div class="sub-modal-hint" id="ua-hint">Каким клиентом представляться панели</div>
       <div id="ua-presets" class="chain-nodes"></div>
       <div class="sub-modal-hint">Или свой</div>
       <input id="ua-input" class="sub-input" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="clash-meta/mihomo">
@@ -675,7 +677,7 @@ function navBack(){
 }
 
 // ---------- Capacitor: нативный VPN-плагин ----------
-const BUILD = 'v0.21.11';
+const BUILD = 'v0.21.12';
 const Cap = window.Capacitor;
 const platform = (Cap && Cap.getPlatform) ? Cap.getPlatform() : 'web';
 const isNative = !!(Cap && Cap.isNativePlatform ? Cap.isNativePlatform() : (platform && platform!=='web'));
@@ -778,6 +780,7 @@ function delSub(id, ev){
 // Панель выбирает формат ответа по UA: на clash-UA приходит YAML, на v2rayNG/Xray —
 // JSON Xray или список ссылок. Ядро понимает все три (конвертер внутри), поэтому UA
 // можно менять — это способ забрать подписку у панели, которая не знает про clash.
+// UA свой у каждой подписки (поле ua в mise_subs); без поля — UA_DEFAULT.
 const UA_DEFAULT='clash-meta/mihomo';
 const UA_PRESETS=[
   {ua:'clash-meta/mihomo', t:'mihomo / clash', s:'YAML — РОДНОЙ ФОРМАТ ЯДРА'},
@@ -785,15 +788,19 @@ const UA_PRESETS=[
   {ua:'Xray/25.9.11',      t:'Xray',           s:'JSON КОНФИГ XRAY'},
   {ua:'sing-box/1.11.0',   t:'sing-box',       s:'ЕСЛИ ПАНЕЛЬ ЗНАЕТ ТОЛЬКО ЕГО'},
 ];
-function getUserAgent(){ return localStorage.getItem('mise_ua') || UA_DEFAULT; }
-function setUserAgent(ua){
+function getUserAgent(sub){ const s=sub||activeSub(); return (s&&s.ua) || UA_DEFAULT; }
+function setUserAgent(ua, sub){
+  const s=sub||activeSub(); if(!s) return;
+  const l=subs(); const a=l.find(x=>x.id===s.id); if(!a) return;
   const v=(ua||'').trim();
-  localStorage.setItem('mise_ua', v || UA_DEFAULT);
+  if(v && v!==UA_DEFAULT) a.ua=v; else delete a.ua;
+  saveSubs(l);
   // формат подписки мог смениться вместе с UA — кэш серверов больше не про неё
-  localStorage.removeItem(ck('mise_lastServers'));
-  applyUaSub();
+  localStorage.removeItem('mise_lastServers:'+a.id); localStorage.removeItem('mise_mainServers:'+a.id);
 }
-function applyUaSub(){ const el=document.getElementById('ua-sub'); if(el) el.textContent=getUserAgent().toUpperCase(); }
+function uaLabel(ua){ const p=UA_PRESETS.find(x=>x.ua===ua); return (p?p.t:ua).toUpperCase(); }
+// миграция: раньше UA был один на всех (mise_ua) — раздаём его подпискам без своего
+(function(){ const g=localStorage.getItem('mise_ua'); if(g===null) return; const v=g.trim(); if(v && v!==UA_DEFAULT){ const l=subs(); let ch=false; for(const s of l){ if(!s.ua){ s.ua=v; ch=true; } } if(ch) saveSubs(l); } localStorage.removeItem('mise_ua'); })();
 
 // ---------- каомодзи-мордочка под брендом ----------
 const FACE_HAPPY=['^o^','^q^','^_^','XD','>ᴗ<','•‿•','\\o/','^ᴗ^'];
@@ -818,7 +825,7 @@ const delays={}; // имя ноды -> пинг
 let _tunnelRefreshed=false;
 async function refreshViaTunnel(){
   const sub=activeSub(); if(!sub||!Vpn||!Vpn.fetchSub||_tunnelRefreshed) return; _tunnelRefreshed=true;
-  try{ const r=await Vpn.fetchSub({url:sub.url, hwid:getHwid(), userAgent:getUserAgent(), fallbacks:subFallbacks(sub), viaProxy:true});
+  try{ const r=await Vpn.fetchSub({url:sub.url, hwid:getHwid(), userAgent:getUserAgent(sub), fallbacks:subFallbacks(sub), viaProxy:true});
     if(r&&r.status>=200&&r.status<300&&!r.cached){ const l=subs(); const a=l.find(x=>x.id===sub.id); if(a){ if(r.title) a.title=r.title; a.userinfo=parseUserinfo(r.userinfo||''); a.metaAt=Date.now(); if(r.fallbacks) a.fallbacks=String(r.fallbacks).split('\n').map(x=>x.trim()).filter(Boolean); saveSubs(l); renderSubs(); updateCoverMeta(); } }
   }catch{}
 }
@@ -1169,8 +1176,13 @@ function openSubModal(){
 }
 function closeSubModal(){ document.getElementById('sub-modal').classList.add('hidden'); }
 
-function openUaModal(){
-  const inp=document.getElementById('ua-input'); inp.value=getUserAgent();
+let uaModalSub=''; // id подписки, чей UA редактируем
+function openUaModal(id, ev){
+  if(ev&&ev.stopPropagation) ev.stopPropagation();
+  const s=subs().find(x=>x.id===id); if(!s) return;
+  uaModalSub=id;
+  const h=document.getElementById('ua-hint'); if(h) h.textContent='Каким клиентом представляться панели «'+(s.title||s.name)+'»';
+  const inp=document.getElementById('ua-input'); inp.value=getUserAgent(s);
   renderUaPresets();
   document.getElementById('ua-modal').classList.remove('hidden');
 }
@@ -1183,15 +1195,16 @@ function renderUaPresets(){
 }
 function pickUaPreset(ua){ document.getElementById('ua-input').value=ua; renderUaPresets(); }
 function saveUaModal(){
-  const was=getUserAgent();
-  setUserAgent(document.getElementById('ua-input').value);
+  const s=subs().find(x=>x.id===uaModalSub); if(!s){ closeUaModal(); return; }
+  const was=getUserAgent(s);
+  setUserAgent(document.getElementById('ua-input').value, s);
   closeUaModal();
-  if(getUserAgent()!==was){
-    // формат ответа панели меняется вместе с UA — перечитываем подписку
-    localStorage.removeItem('mise_subFormat');
+  const now=getUserAgent(subs().find(x=>x.id===s.id));
+  if(now!==was){
     renderSubs();
-    toast('User-Agent: '+getUserAgent());
-    if(getSubUrl()) previewServers();
+    toast('User-Agent: '+now);
+    // формат ответа панели меняется вместе с UA — перечитываем подписку
+    if(s.id===activeSubId()){ localStorage.removeItem('mise_subFormat'); _proxies=null; _mainSel=null; _providerNodes=null; renderServerSheet(); fetchSubMeta(activeSub()); refreshServerList(); if(connected){ suppressProxies=true; reconnect(); } }
   }
 }
 function renderSubs(){
@@ -1205,10 +1218,11 @@ function renderSubs(){
     const on=s.id===act; const u=s.userinfo||{};
     const used=(u.download||0)+(u.upload||0); const traffic=u.total?fmtBytes(used)+' / '+fmtBytes(u.total):(used?'ИСПОЛЬЗОВАНО '+fmtBytes(used):'');
     const parts=[on?'АКТИВНА':'', traffic, subExpiryText(u), (on&&fmt)?fmt.toUpperCase():''].filter(Boolean);
-    const sub=parts.length?parts.join(' · '):esc(s.url.replace(/^https?:\/\//,'').slice(0,38));
+    const sub=parts.length?esc(parts.join(' · ')):esc(s.url.replace(/^https?:\/\//,'').slice(0,38));
+    const ua=`<span class="sub-ua${s.ua?' set':''}" onclick="openUaModal('${q(s.id)}',event)">UA · ${esc(uaLabel(getUserAgent(s)))}</span>`;
     const logo=s.logo?`<img class="sub-logo" src="${esc(s.logo)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'sub-logo dot'}))">`:`<span class="sub-logo dot${on?' on':''}"></span>`;
     return `<div class="row${on?' sub-on':''}" onclick="switchSub('${q(s.id)}')">${logo}`+
-      `<div class="grow"><div class="t">${esc(s.title||s.name)}</div><div class="s">${sub}</div></div>`+
+      `<div class="grow"><div class="t">${esc(s.title||s.name)}</div><div class="s">${sub}</div>${ua}</div>`+
       `<span class="chev" onclick="delSub('${q(s.id)}',event)">✕</span></div>`;
   }).join('');
   const a=list.find(x=>x.id===act)||list[0];
@@ -1461,7 +1475,9 @@ async function saveSubModal(){
 // ---------- трафик (реальный, из API ядра) ----------
 function fmtBytes(b){ b=Math.max(0,Number(b)||0); if(b<1024) return Math.round(b)+' Б'; const u=['КБ','МБ','ГБ','ТБ']; let i=-1; do{ b/=1024; i++; }while(b>=1024&&i<u.length-1); return b.toFixed(b<10?1:0)+' '+u[i]; }
 // таймеры сессии/трафика живут только пока экран виден — в фоне WebView не должен будить процесс
-function tickSession(){ if(document.hidden) return; const s=Math.floor((Date.now()-sessStart)/1000); const el=document.getElementById('sess-time'); if(el) el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+// как на ПК: до часа мм:сс, дальше ч:мм
+function fmtSession(sec){ const p=n=>String(n).padStart(2,'0'); const h=Math.floor(sec/3600); return h>0 ? h+':'+p(Math.floor((sec%3600)/60)) : p(Math.floor(sec/60))+':'+p(sec%60); }
+function tickSession(){ if(document.hidden) return; const s=Math.max(0,Math.floor((Date.now()-sessStart)/1000)); const el=document.getElementById('sess-time'); if(el) el.textContent=fmtSession(s); }
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ if(trafTimer){ clearInterval(trafTimer); trafTimer=null; prevTrafT=0; } if(sessTimer){ clearInterval(sessTimer); sessTimer=null; } }
   else if(connected){ if(!sessTimer){ sessTimer=setInterval(tickSession,1000); tickSession(); } startTraffic(); loadProxies(); }
@@ -1499,13 +1515,12 @@ refreshChainsSub();
 applyModeLabel();
 refreshSplitSub();
 initAutostart();
-applyUaSub();
 renderSubs();
 setUiConnected(false);
 // заголовки панели (title/logo/оплата/поддержка/трафик) — на старте, при добавлении и переключении
 async function fetchSubMeta(sub){
   if(!sub||!sub.url||!Vpn||!Vpn.fetchSub) return;
-  try{ const r=await Vpn.fetchSub({url:sub.url, hwid:getHwid(), userAgent:getUserAgent(), fallbacks:subFallbacks(sub)});
+  try{ const r=await Vpn.fetchSub({url:sub.url, hwid:getHwid(), userAgent:getUserAgent(sub), fallbacks:subFallbacks(sub)});
     if(!r||r.status<200||r.status>=300) return;
     if(r.cached) return;
     const l=subs(); const a=l.find(x=>x.id===sub.id); if(!a) return;
