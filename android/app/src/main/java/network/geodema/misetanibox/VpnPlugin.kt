@@ -193,7 +193,7 @@ class VpnPlugin : Plugin() {
         } catch (_: Exception) { 0 }
     }
 
-    // тактильный отклик: heavy/medium/light — удар, tick — выбор, success/warning/error — уведомление (как на iOS).
+    // тактильный отклик: heavy = защёлкнулась панель, tick = закрылась.
     // usage=TOUCH система глушит при выключенном «виброотклике при касании» → PHYSICAL_EMULATION
     @PluginMethod
     fun haptic(call: PluginCall) {
@@ -205,15 +205,7 @@ class VpnPlugin : Plugin() {
                 @Suppress("DEPRECATION") context.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
             }
             val effect = if (Build.VERSION.SDK_INT >= 29) {
-                when (kind) {
-                    "heavy" -> android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_HEAVY_CLICK)
-                    "medium" -> android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_CLICK)
-                    "light" -> android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_TICK)
-                    "success" -> android.os.VibrationEffect.createWaveform(longArrayOf(0, 12, 60, 24), -1)
-                    "warning" -> android.os.VibrationEffect.createWaveform(longArrayOf(0, 24, 60, 12), -1)
-                    "error" -> android.os.VibrationEffect.createWaveform(longArrayOf(0, 18, 50, 18, 50, 18), -1)
-                    else -> android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_TICK)
-                }
+                android.os.VibrationEffect.createPredefined(if (kind == "heavy") android.os.VibrationEffect.EFFECT_HEAVY_CLICK else android.os.VibrationEffect.EFFECT_TICK)
             } else {
                 android.os.VibrationEffect.createOneShot(if (kind == "heavy") 30 else 10, android.os.VibrationEffect.DEFAULT_AMPLITUDE)
             }
@@ -307,6 +299,130 @@ class VpnPlugin : Plugin() {
         val ret = JSObject()
         ret.put("on", VpnPrefs.isAutostart(context))
         call.resolve(ret)
+    }
+
+    // ---------- отключение по блокировке экрана (аналог INCY) ----------
+    @PluginMethod
+    fun setLockBehavior(call: PluginCall) {
+        VpnPrefs.setLockDisconnect(context, call.getBoolean("disconnectOnLock", false) ?: false)
+        VpnPrefs.setLockReconnect(context, call.getBoolean("reconnectOnUnlock", false) ?: false)
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun getLockBehavior(call: PluginCall) {
+        val ret = JSObject()
+        ret.put("disconnectOnLock", VpnPrefs.isLockDisconnect(context))
+        ret.put("reconnectOnUnlock", VpnPrefs.isLockReconnect(context))
+        call.resolve(ret)
+    }
+
+    // ---------- отключить оптимизацию батареи ----------
+    @PluginMethod
+    fun requestIgnoreBatteryOptimizations(call: PluginCall) {
+        try {
+            val pm = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            if (pm.isIgnoringBatteryOptimizations(context.packageName)) {
+                call.resolve(JSObject().put("alreadyIgnored", true))
+                return
+            }
+            val i = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+            i.data = android.net.Uri.parse("package:" + context.packageName)
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(i)
+            call.resolve(JSObject().put("alreadyIgnored", false))
+        } catch (e: Exception) {
+            try {
+                val i = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                i.data = android.net.Uri.parse("package:" + context.packageName)
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(i)
+            } catch (_: Exception) {}
+            call.reject(e.message ?: "не удалось открыть настройки")
+        }
+    }
+
+    @PluginMethod
+    fun isIgnoringBatteryOptimizations(call: PluginCall) {
+        val pm = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        call.resolve(JSObject().put("on", pm.isIgnoringBatteryOptimizations(context.packageName)))
+    }
+
+    // ---------- экономичный режим ----------
+    @PluginMethod
+    fun getBatterySaver(call: PluginCall) {
+        call.resolve(JSObject().put("on", VpnPrefs.isBatterySaver(context)))
+    }
+
+    @PluginMethod
+    fun setBatterySaver(call: PluginCall) {
+        VpnPrefs.setBatterySaver(context, call.getBoolean("on", false) ?: false)
+        call.resolve()
+    }
+
+    // ---------- автовключение VPN по приложению (можно выбрать несколько) ----------
+    @PluginMethod
+    fun setAppTriggers(call: PluginCall) {
+        val arr = call.getArray("pkgs", com.getcapacitor.JSArray())
+        val list = ArrayList<String>()
+        for (i in 0 until (arr?.length() ?: 0)) {
+            arr?.optString(i)?.let { if (it.isNotBlank()) list.add(it) }
+        }
+        VpnPrefs.setAppTriggerPackages(context, list)
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun getAppTriggers(call: PluginCall) {
+        val ret = JSObject()
+        val arr = com.getcapacitor.JSArray()
+        for (p in VpnPrefs.appTriggerPackages(context)) arr.put(p)
+        ret.put("pkgs", arr)
+        ret.put("watcherRunning", AppWatcherService.isRunning)
+        call.resolve(ret)
+    }
+
+    @PluginMethod
+    fun hasUsageAccess(call: PluginCall) {
+        call.resolve(JSObject().put("on", hasUsageAccess(context)))
+    }
+
+    // Разрешение PACKAGE_USAGE_STATS особое — единственный способ его выдать —
+    // системный список приложений с доступом к статистике использования.
+    @PluginMethod
+    fun requestUsageAccess(call: PluginCall) {
+        try {
+            val i = Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS)
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(i)
+            call.resolve()
+        } catch (e: Exception) {
+            call.reject(e.message ?: "не удалось открыть настройки")
+        }
+    }
+
+    @PluginMethod
+    fun startAppWatcher(call: PluginCall) {
+        if (!hasUsageAccess(context)) {
+            call.reject("нет доступа к статистике использования")
+            return
+        }
+        val i = Intent(context, AppWatcherService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(i) else context.startService(i)
+        VpnPrefs.setAppWatcherEnabled(context, true)
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun stopAppWatcher(call: PluginCall) {
+        context.stopService(Intent(context, AppWatcherService::class.java))
+        VpnPrefs.setAppWatcherEnabled(context, false)
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun isAppWatcherRunning(call: PluginCall) {
+        call.resolve(JSObject().put("on", AppWatcherService.isRunning))
     }
 
     @PluginMethod

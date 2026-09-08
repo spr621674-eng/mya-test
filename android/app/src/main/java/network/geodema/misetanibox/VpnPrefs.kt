@@ -36,6 +36,78 @@ object VpnPrefs {
     /** JSON-массив запасных адресов подписки */
     const val KEY_FALLBACKS = "fallbacks"
 
+    // ---------- функции форка (поверх апстрима) ----------
+    /** Разрывать туннель при блокировке экрана (аналог функции INCY) */
+    const val KEY_LOCK_DISCONNECT = "lock_disconnect"
+    /** Поднимать туннель заново при разблокировке — работает только вместе с KEY_LOCK_DISCONNECT */
+    const val KEY_LOCK_RECONNECT = "lock_reconnect"
+    /** JSON-массив имён пакетов приложений-триггеров для автовключения VPN (пусто = функция выключена) */
+    const val KEY_APP_TRIGGER_PKGS = "app_trigger_pkgs"
+    /** Экономичный режим: реже опрашивает ядро, меньше будит систему */
+    const val KEY_BATTERY_SAVER = "battery_saver"
+    /**
+     * Включена ли функция «Автовключение по приложению» (тумблер, а не список приложений).
+     * Раньше это состояние жило только в памяти как AppWatcherService.isRunning — после
+     * перезагрузки устройства ничто не поднимало сервис заново, хотя список приложений
+     * и сам факт «функция была включена» в prefs сохранялись. BootReceiver читает этот
+     * ключ, чтобы восстановить сервис вместе с обычным автозапуском VPN.
+     */
+    const val KEY_APP_WATCHER_ENABLED = "app_watcher_enabled"
+    /**
+     * Watcher сам включил текущую VPN-сессию (а не пользователь вручную) — раньше это
+     * жило только в памяти AppWatcherService (vpnWasStartedByWatcher). Сервис START_STICKY,
+     * система может убить и перезапустить его под давлением памяти — при перезапуске флаг
+     * терялся, хотя VPN, включённый watcher'ом, продолжал работать. Теперь переживает
+     * перезапуск сервиса.
+     */
+    const val KEY_WATCHER_STARTED_VPN = "watcher_started_vpn"
+
+    fun appTriggerPackages(ctx: Context): Set<String> {
+        val raw = prefs(ctx).getString(KEY_APP_TRIGGER_PKGS, "[]") ?: "[]"
+        return try {
+            val arr = JSONArray(raw)
+            val out = HashSet<String>()
+            for (i in 0 until arr.length()) {
+                val p = arr.optString(i, "").trim()
+                if (p.isNotEmpty()) out.add(p)
+            }
+            out
+        } catch (_: Exception) {
+            emptySet()
+        }
+    }
+
+    fun setAppTriggerPackages(ctx: Context, pkgs: Collection<String>) {
+        prefs(ctx).edit()
+            .putString(KEY_APP_TRIGGER_PKGS, JSONArray(pkgs.toList()).toString())
+            .apply()
+    }
+
+    fun isAppWatcherEnabled(ctx: Context): Boolean = prefs(ctx).getBoolean(KEY_APP_WATCHER_ENABLED, false)
+    fun setAppWatcherEnabled(ctx: Context, on: Boolean) {
+        prefs(ctx).edit().putBoolean(KEY_APP_WATCHER_ENABLED, on).apply()
+    }
+
+    fun isVpnStartedByWatcher(ctx: Context): Boolean = prefs(ctx).getBoolean(KEY_WATCHER_STARTED_VPN, false)
+    fun setVpnStartedByWatcher(ctx: Context, on: Boolean) {
+        prefs(ctx).edit().putBoolean(KEY_WATCHER_STARTED_VPN, on).apply()
+    }
+
+    fun isLockDisconnect(ctx: Context): Boolean = prefs(ctx).getBoolean(KEY_LOCK_DISCONNECT, false)
+    fun setLockDisconnect(ctx: Context, on: Boolean) {
+        prefs(ctx).edit().putBoolean(KEY_LOCK_DISCONNECT, on).apply()
+    }
+
+    fun isLockReconnect(ctx: Context): Boolean = prefs(ctx).getBoolean(KEY_LOCK_RECONNECT, false)
+    fun setLockReconnect(ctx: Context, on: Boolean) {
+        prefs(ctx).edit().putBoolean(KEY_LOCK_RECONNECT, on).apply()
+    }
+
+    fun isBatterySaver(ctx: Context): Boolean = prefs(ctx).getBoolean(KEY_BATTERY_SAVER, false)
+    fun setBatterySaver(ctx: Context, on: Boolean) {
+        prefs(ctx).edit().putBoolean(KEY_BATTERY_SAVER, on).apply()
+    }
+
     fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     fun hasSubscription(ctx: Context): Boolean =
