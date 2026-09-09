@@ -6,6 +6,10 @@ on:
       - "v*"
   workflow_dispatch:
     inputs:
+      version:
+        description: "Версия для этой сборки (например 1.21.0) — впишите то же число, что потом укажете тегом в Release"
+        type: string
+        default: "0.0.0"
       include_x86:
         description: "Добавить x86_64 (для эмулятора; в релиз не нужен)"
         type: boolean
@@ -20,6 +24,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # Версия берётся либо из тега (если пушите теги git напрямую), либо из
+      # поля "version", которое вписываете при нажатии Run workflow. versionCode
+      # Android ОБЯЗАН расти с каждым обновлением, иначе система откажется
+      # ставить новую сборку поверх старой — поэтому он не связан с введённым
+      # текстом, а берётся из номера запуска Actions, который растёт сам.
+      - name: Determine version
+        id: ver
+        run: |
+          REF="${{ github.ref }}"
+          if [[ "$REF" == refs/tags/* ]]; then
+            VERSION="${REF#refs/tags/}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          if [ -z "$VERSION" ]; then VERSION="0.0.0"; fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Собираю версию: $VERSION (versionCode ${{ github.run_number }})"
+
+      - name: Stamp version into build files
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          CODE="${{ github.run_number }}"
+          sed -i "s/versionCode [0-9]\+/versionCode $CODE/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION\"/" android/app/build.gradle
+          sed -i "s/const BUILD = '[^']*';/const BUILD = 'v$VERSION';/" www/index.html
+          echo "versionCode=$CODE versionName=$VERSION записаны в build.gradle и index.html"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -104,50 +136,25 @@ jobs:
       # всплывает только на packageRelease — через две минуты сборки и в виде
       # ASN.1-исключения ("Tag number over 30 is not supported"), по которому
       # не понять, что именно сломалось: файл, пароль или алиас.
-      - name: Decode release keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      # В форке нет приватных секретов автора (ANDROID_KEYSTORE_BASE64 и т.д.) —
+      # они не копируются вместе с репозиторием. Поэтому генерируем свой ключ
+      # прямо тут, каждый раз заново.
+      - name: Generate signing keystore
         run: |
-          set -euo pipefail
-          ks="$RUNNER_TEMP/misetanibox-release.p12"
-          # tr выкидывает переносы и пробелы: секрет мог быть сохранён обёрнутым
-          # по 76 колонок (обычный base64 без -w 0) или с хвостовым переводом строки
-          printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > "$ks"
-
-          # PKCS12 — это DER SEQUENCE, он ВСЕГДА начинается с 0x30 (обычно 3082).
-          # Другое начало значит, что в секрете лежит не то: 1f8b — gzip,
-          # fffe — текст в UTF-16 с BOM, efbb — UTF-8 с BOM, 4d00 — вывод
-          # PowerShell, попавший в секрет вместе с кодировкой.
-          head=$(head -c 2 "$ks" | od -An -tx1 | tr -d ' \n')
-          if [ "${head:0:2}" != "30" ]; then
-            echo "::error::ANDROID_KEYSTORE_BASE64 не содержит base64 от PKCS12-хранилища"
-            echo "первые байты: ${head:-пусто} (у валидного p12 — 3082), размер: $(stat -c%s "$ks") Б"
-            echo "пересоздайте секрет одной строкой: base64 -w 0 misetanibox-release.p12"
-            exit 1
-          fi
-
-          # Хранилище открывается своим паролем, и в нём есть нужный алиас.
-          # -alias ловит пустой или переименованный ANDROID_KEY_ALIAS: без него
-          # ключ не найдётся уже на этапе подписи.
-          # Вывод собирается целиком: keytool пишет свои ошибки в stdout, и
-          # редирект только stderr их бы потерял.
-          if ! keytool -list -keystore "$ks" -storetype PKCS12 \
-                 -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" \
-                 > "$RUNNER_TEMP/keytool.log" 2>&1; then
-            echo "::error::keystore не открылся — проверьте ANDROID_KEYSTORE_PASSWORD и ANDROID_KEY_ALIAS"
-            cat "$RUNNER_TEMP/keytool.log"
-            exit 1
-          fi
-          echo "keystore в порядке"
+          keytool -genkeypair -v \
+            -keystore "$RUNNER_TEMP/misetanibox-release.p12" \
+            -storetype PKCS12 \
+            -alias misetanibox \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass misetanibox123 -keypass misetanibox123 \
+            -dname "CN=Misetanibox, OU=Personal, O=Personal, L=Unknown, S=Unknown, C=RU"
 
       - name: Build release APK (signed)
         working-directory: android
         env:
           ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/misetanibox-release.p12
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: misetanibox123
+          ANDROID_KEY_ALIAS: misetanibox
         run: |
           chmod +x ./gradlew
           ./gradlew assembleRelease --no-daemon
